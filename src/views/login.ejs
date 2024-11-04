@@ -21,6 +21,8 @@
       >
     </label>
     <button type="submit">ENVIAR</button>
+    <button type="button" id="fetchUserButton">fetchUserData</button>
+    <a href="/">HOME</a>
   </form>
   <script>
     const form = document.getElementById("form")
@@ -50,13 +52,18 @@
         if(response.status === 401) throw new Error("Password is not valid")
         if(response.status === 500) throw new Error("Server error")
         const data = await response.json()
-        console.log(data.message)
+        localStorage.setItem("userId", data.userId)
       } catch (error){
         console.log(error.message)
       }
     }
 
     form.addEventListener("submit", handleSubmit)
+
+    const fetchUserData = require("../utils/fetchUserData")
+
+    document.getElementById("fetchUserButton").addEventListener("click", fetchUserData)
+
   </script>
 </body>
 </html>

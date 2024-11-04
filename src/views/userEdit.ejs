@@ -1,0 +1,51 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>user-edit</title>
+</head>
+<body>
+  <form>
+    <img alt="preview" id="profilePicPreview" style="width: 100px; height: 100px; border-radius: 100%;">
+    <label>
+      Profile Picture:
+      <input id="profile_pic" name="profile_pic" type="file">
+    </label>
+    <label>
+      Username:
+      <input id="username" name="username" type="text">
+    </label>
+    <label>
+      Password:
+      <input id="user_password" name="user_password" type="password">
+    </label>
+    <button type="submit">ENVIAR</button>
+    <script>
+      const profilePicPreview = document.getElementById("profilePicPreview")
+      const usernameInput = document.getElementById("username")
+
+      const setInputValues = async () => {
+        try{
+          const profile_pic = localStorage.getItem("profile_pic")
+          if(!profile_pic) throw new Error("There's no profile_pic in localStorage")
+          const username = localStorage.getItem("username")
+          if(!username) throw new Error("There's no username in localStorage")
+          /* const response = await fetch("http://localhost:3000/users/validate-password", {
+            method: "POST",
+            headers: {
+              "Content-type": "application/json"
+            },
+            body: JSON.stringify({user_password: })
+          }) */
+          profilePicPreview.src = profile_pic
+          usernameInput.value = username
+        } catch(error){
+          console.log(error.message)
+        }
+      }
+      
+      setInputValues()
+    </script>
+  </form>
+</body>
+</html>

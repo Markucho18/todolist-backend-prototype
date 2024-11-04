@@ -14,6 +14,9 @@ app.set("views", "./src/views")
 const usersRouter = require("./src/routes/users")
 app.use("/users", usersRouter)
 
+const tasksRouter = require("./src/routes/tasks")
+app.use("/tasks", tasksRouter)
+
 app.get("/", (req, res) => {
   res.render("index", {
     message: "Hola Mundo, estas en la pagina principal"

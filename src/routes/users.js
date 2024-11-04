@@ -8,11 +8,33 @@ const comparePasswords = require("../utils/comparePasswords")
 router.use(cookieParser())
 
 router.get("/", (req, res) => {
-  res.send('<a href="/users/login">LOGIN</a>')
+  res.send(`
+    <a href="/users/login">LOGIN</a>
+    <a href="/users/edit">EDIT</a>
+  `)
 })
 
 router.get("/login", (req, res)=>{
   res.render("login")
+})
+
+router.get("/edit", (req, res) => {
+  res.render("userEdit")
+})
+
+router.get("/:id", async (req, res) => {
+  const {id} = req.params
+  console.log({id})
+  const query = "SELECT * FROM users WHERE id = ?"
+  try{
+    const [rows] = await pool.query(query, [id])
+    if(rows.length === 0) return res.status(404).json({ message: "User not found" })
+    //Quitarle la contraseña
+    const {user_password, ...userData} = rows[0]
+    res.status(200).json({message: "User data got successfully", userData})
+  } catch(error){
+    res.status(500).json({message: "Server error"})
+  }
 })
 
 router.post("/login", async (req, res)=>{
@@ -22,18 +44,14 @@ router.post("/login", async (req, res)=>{
     const [rows] = await pool.query(query, [email])
     if(rows.length > 0){
       const user = rows[0]
-      console.log({ user })
       const hashedPassword = user.user_password
       const passwordIsValid = await comparePasswords(user_password, hashedPassword)
       if(passwordIsValid){
-        console.log("Access Token Secret:", process.env.ACCESS_TOKEN_SECRET);
-        console.log("Refresh Token Secret:", process.env.REFRESH_TOKEN_SECRET);
         const accessToken = jwt.sign({id: user.id}, process.env.ACCESS_TOKEN_SECRET, {expiresIn: "1h"})
         const refreshToken = jwt.sign({id: user.id}, process.env.REFRESH_TOKEN_SECRET, {expiresIn: "7d"})
-        console.log({accessToken, refreshToken})
         res.cookie("accessToken", accessToken, {httpOnly: true, maxAge: 60 * 60 * 1000})
         res.cookie("refreshToken", refreshToken, {httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000})
-        return res.status(200).json({message: "Logged in succesfully"})
+        return res.status(200).json({message: "Logged in succesfully", userId: user.id})
       }
       else{
         return res.status(401).json({message: "Password is not valid"})
