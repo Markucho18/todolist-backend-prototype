@@ -14,6 +14,7 @@ const authenticateToken = async (req, res, next) => {
       if(error.name !== "TokenExpiredError"){
         return res.status(403).json({ message: "Invalid access token"})
       }
+      console.log("Expiro el access_token")
     }
   }
   //Si expiro, confirmar si hay RefreshToken
