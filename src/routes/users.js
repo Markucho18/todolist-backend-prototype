@@ -9,15 +9,29 @@ const authenticateToken = require("../middlewares/authenticateToken")
 
 router.use(cookieParser())
 
+const profilePicRouter = require("./profilePic")
+router.use("/edit-profile-pic", profilePicRouter)
+
 router.get("/", (req, res) => {
   res.send(`
     <a href="/users/login">LOGIN</a>
+    <a href="/users/register">REGISTER</a>
+    <a href="/users/logout">LOGOUT</a>
     <a href="/users/edit">EDIT</a>
+    <a href="/">HOME</a>
   `)
 })
 
 router.get("/login", (req, res)=>{
   res.render("login")
+})
+
+router.get("/register", (req, res)=>{
+  res.render("register")
+})
+
+router.get("/logout", (req, res)=>{
+  res.render("logout")
 })
 
 router.get("/edit", (req, res)=>{
@@ -78,12 +92,30 @@ router.post("/login", async (req, res)=>{
   }
 })
 
-router.post("/register", (req, res)=>{
-
+router.post("/register", async (req, res)=>{
+  const {username, email, user_password} = req.body
+  const hashedPassword = await hashPassword(user_password)
+  const defaultImageUrl = "https://res.cloudinary.com/dyihwozea/image/upload/byrmbj7rdtui1ohypvxm.webp"
+  const query = `
+    INSERT into users (username, email, user_password, profile_pic)
+    VALUES (?, ?, ?, ?)
+  `
+  try{
+    const results = await pool.query(query, [username, email, hashedPassword, defaultImageUrl])
+    if(results[0].affectedRows === 0) return res.status(500).json({message: "Could not register user"})
+    res.status(200).json({message: "User registered succesfully"})
+  } catch(error){
+    console.log(error)
+    res.status(500).json({message: "Could not register user"})
+  }
 })
 
 router.post("/logout", (req, res)=>{
-
+  const {accessToken} = req.cookies
+  const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET)
+  const userId = decoded.id
+  console.log(userId)
+  res.json({message: "empanadas"})
 })
 
 router.put("/edit-username", authenticateToken, async (req, res)=>{
@@ -119,6 +151,5 @@ router.put("/edit-password", authenticateToken, async(req, res) => {
     }
   } else return res.status(400).json({message: "Not enough data"})
 })
-
 
 module.exports = router

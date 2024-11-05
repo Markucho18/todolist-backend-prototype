@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken")
 
 const authenticateToken = async (req, res, next) => {
   const {accessToken, refreshToken} = req.cookies
+  console.log("Autentificando token")
   //Confirmar si hay accessToken
   if(accessToken){
     try{

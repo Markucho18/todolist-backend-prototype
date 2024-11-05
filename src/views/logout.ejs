@@ -1,0 +1,28 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>logout</title>
+</head>
+<body>
+  <button id="logoutButton">LOG OUT</button>
+  <script>
+    const logoutButton = document.getElementById("logoutButton")
+
+    const handleLogout = async () => {
+      try{
+        const response = await fetch(`http://localhost:3000/users/logout`, {
+          method: "POST",
+          credentials: "include"
+        })
+        const data = await response.json()
+        console.log(data.message)
+      } catch(error){
+
+      }
+    }
+
+    logoutButton.addEventListener("click", handleLogout)
+  </script>
+</body>
+</html>

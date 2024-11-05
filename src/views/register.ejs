@@ -1,0 +1,71 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>register</title>
+</head>
+<body>
+  <form id="form">
+    <label>
+      Username:
+      <input type="text" name="username">
+    </label>
+    <label>
+      email:
+      <input type="text" name="email">
+    </label>
+    <label>
+      password:
+      <input type="text" name="user_password">
+    </label>
+    <button type="submit">ENVIAR</button>
+    <button type="reset">RESET</button>
+  </form>
+  <a href="/users/">USERS</a>
+  <script>
+    const form = document.getElementById("form")
+
+    const formData = {
+      username: "",
+      email: "",
+      user_password: ""
+    }
+
+    form.addEventListener("input", (e) => {
+      const {name, value} = e.target
+      formData[name] = value
+    })
+
+    const validateData = (data) => {
+      const {username, email, user_password} = data
+      if(username.length <= 4) return ({ valid: false, msg: "Username can't be empty or short"}) 
+      if(!email.includes("@gmail.com")) return ({ valid: false, msg: "Email must contain '@gmail.com'"})
+      if(user_password.length < 8) return ({ valid: false, msg:"Password must have at least 8 characters"})
+      return {valid: true}
+    }
+
+    const handleSubmit = async (e) => {
+      e.preventDefault()
+      try{
+        const validation = validateData(formData)
+        if(!validation.valid) throw new Error(validation.msg) 
+        const response = await fetch(`http://localhost:3000/users/register`, {
+          method: "POST",
+          headers: {
+            "Content-type": "application/json"
+          },
+          body: JSON.stringify(formData)
+        })
+        if(response.status === 500) throw new Error(response.message)
+        const data = await response.json()
+        console.log(data.message)
+      } catch(error){
+        console.log(error.message)
+      }
+    }
+
+    form.addEventListener("submit", handleSubmit)
+
+  </script>
+</body>
+</html>

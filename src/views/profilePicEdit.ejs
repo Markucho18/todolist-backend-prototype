@@ -1,43 +1,105 @@
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>profile-pic-edit</title>
-</head>
-<body>
-  <p>Estas en profile-pic-edit</p>
-  <img
-    style="width: 150px; height: 150px; border-radius: 100%; object-fit: cover; object-position: top;"
-    id="picturePreview"
-    alt="profile-pic"
-  >
-  <form id="form" enctype="multipart/form-data">
-    <input type="file" name="profile_pic" accept="/image">
-    <button type="submit">ENVIAR</button>
-  </form>
-  <script>
-    const picturePreview = document.getElementById("picturePreview")
-    const profile_pic = localStorage.getItem("profile_pic")
-    if(profile_pic) picturePreview.src = profile_pic
-    else console.log("No profile_pic in localStorage")
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>profile-pic-edit</title>
+  </head>
+  <body>
+    <p>Estas en profile-pic-edit</p>
+    <img
+      style="
+        width: 150px;
+        height: 150px;
+        border-radius: 100%;
+        object-fit: cover;
+        object-position: top;
+      "
+      id="picturePreview"
+      alt="profile-pic"
+    />
+    <form id="form" enctype="multipart/form-data">
+      <input id="fileInput" type="file" name="profile_pic" accept="image/*" />
+      <button type="submit">ENVIAR</button>
+    </form>
+    <a href="/users/edit">EDIT</a>
+    <script>
 
-    const form = document.getElementById("form")
+      const fetchUserData = async () => {
+        const userId = localStorage.getItem("userId");
+        if (userId) {
+          try {
+            const response = await fetch(
+              `http://localhost:3000/users/${userId}`,
+              {
+                method: "GET",
+              }
+            );
+            if (response.status === 404) throw new Error("User not found");
+            if (response.status === 500) throw new Error("Server error");
+            const data = await response.json();
+            const userData = data.userData;
+            //Aqui en verdad deberia guardarlo en useState y hacerlo cada que app renderize por primera vez o cada que edite algo del usuario
+            if (userData) {
+              localStorage.setItem("username", userData.username);
+              localStorage.setItem("email", userData.email);
+              localStorage.setItem("profile_pic", userData.profile_pic);
+            } else {
+              throw new Error("User data not found in response");
+            }
+          } catch (error) {
+            console.log(error.message);
+          }
+        } else alert("UserId not found in localStorage");
+      };
 
-    const formData = {
-      profile_pic: "",
-    }
-    
-    form.addEventListener("input", (e) => {
-      const {name, value} = e.target
-      formData[name] = value
-    })
-    
-    const handleSubmit = async (e) => {
-      e.preventDefault()
-      console.log(formData)
-    }
+      const picturePreview = document.getElementById("picturePreview");
+      const profile_pic = localStorage.getItem("profile_pic");
+      if (profile_pic) picturePreview.src = profile_pic;
+      else console.log("No profile_pic in localStorage");
 
-    form.addEventListener("submit", handleSubmit)
-  </script>
-</body>
+      const form = document.getElementById("form");
+
+      document
+        .querySelector('input[type="file"]')
+        .addEventListener("change", (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              picturePreview.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData();
+        const fileInput = document.getElementById("fileInput")
+        const file = fileInput.files[0]
+        if (file) formData.append("profile_pic", file)
+        else throw new Error("No file selected") 
+        try {
+          const response = await fetch(
+            `http://localhost:3000/users/edit-profile-pic`,
+            {
+              method: "PUT",
+              body: formData
+            }
+          );
+          const data = await response.json();
+          if (response.status == 400) throw new Error("Multer Error");
+          if (response.status == 404) throw new Error("Not found")
+          if (response.status == 500) throw new Error(data.msg)
+          console.log(data.msg);
+          if(data.imageUrl) await fetchUserData()
+          else console.log("No hay imageUrl en data")
+        } catch (error) {
+          console.log(error.message);
+        }
+      };
+
+      form.addEventListener("submit", handleSubmit);
+    </script>
+  </body>
 </html>
