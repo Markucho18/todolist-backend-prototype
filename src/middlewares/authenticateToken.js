@@ -1,10 +1,13 @@
 const jwt = require("jsonwebtoken")
 
 const authenticateToken = async (req, res, next) => {
-  const {accessToken, refreshToken} = req.cookies
+  const accessToken = req.cookies?.accessToken
+  const refreshToken = req.cookies?.refreshToken
   console.log("Autentificando token")
+  //console.log({accessToken, refreshToken})
   //Confirmar si hay accessToken
   if(accessToken){
+    const {accessToken} = req.cookies
     try{
       //Si el accessToken es valido, proseguimos
       const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET)
@@ -20,11 +23,12 @@ const authenticateToken = async (req, res, next) => {
   }
   //Si expiro, confirmar si hay RefreshToken
   if(refreshToken){
+    const {refreshToken} = req.cookies
     try{
       const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET)
       const userId = decoded.id
       const newAccessToken = jwt.sign({id: userId}, process.env.ACCESS_TOKEN_SECRET, {expiresIn: "1h"})
-      res.cookie("accessToken", newAccessToken, { httpOnly: true, maxAge: 60 * 60 * 1000 });
+      res.cookie("accessToken", newAccessToken, { httpOnly: true, maxAge: 60 * 60 * 1000, sameSite: "lax"});
       req.user = decoded
       return next()
     } catch(error){

@@ -6,6 +6,7 @@
 </head>
 <body>
   <button id="logoutButton">LOG OUT</button>
+  <a href="/users/">USERS</a>
   <script>
     const logoutButton = document.getElementById("logoutButton")
 
@@ -16,9 +17,14 @@
           credentials: "include"
         })
         const data = await response.json()
+        if(!response.ok) throw new Error(data.message)
         console.log(data.message)
+        localStorage.removeItem("userId")
+        localStorage.removeItem("username")
+        localStorage.removeItem("email")
+        localStorage.removeItem("profile_pic")
       } catch(error){
-
+        console.log(error.message)
       }
     }
 

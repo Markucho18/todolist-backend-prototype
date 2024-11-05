@@ -78,8 +78,8 @@ router.post("/login", async (req, res)=>{
       if(passwordIsValid){
         const accessToken = jwt.sign({id: user.id}, process.env.ACCESS_TOKEN_SECRET, {expiresIn: "1h"})
         const refreshToken = jwt.sign({id: user.id}, process.env.REFRESH_TOKEN_SECRET, {expiresIn: "7d"})
-        res.cookie("accessToken", accessToken, {httpOnly: true, maxAge: 60 * 60 * 1000})
-        res.cookie("refreshToken", refreshToken, {httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000})
+        res.cookie("accessToken", accessToken, {httpOnly: true, maxAge: 60 * 60 * 1000, sameSite: "lax"})
+        res.cookie("refreshToken", refreshToken, {httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000, sameSite: "lax"})
         return res.status(200).json({message: "Logged in succesfully", userId: user.id})
       }
       else{
@@ -111,11 +111,21 @@ router.post("/register", async (req, res)=>{
 })
 
 router.post("/logout", (req, res)=>{
-  const {accessToken} = req.cookies
-  const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET)
-  const userId = decoded.id
-  console.log(userId)
-  res.json({message: "empanadas"})
+  const {accessToken, refreshToken} = req.cookies
+  if (!accessToken || !refreshToken) {
+    return res.status(400).json({ message: "No token provided" });
+  }
+  try{
+    const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET)
+    const userId = decoded.id;
+    console.log("User logged out:", userId);
+    res.clearCookie("accessToken", {httpOnly: true})
+    res.clearCookie("refreshToken", {httpOnly: true})
+    res.status(200).json({message: "User logged out successfully"})
+  } catch(error){
+    console.log({error})
+    res.status(401).json({message: "Invalid token"})
+  }
 })
 
 router.put("/edit-username", authenticateToken, async (req, res)=>{

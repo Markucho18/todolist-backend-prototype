@@ -47,10 +47,9 @@
           },
           body: JSON.stringify(formData)
         });
-        if (response.status === 404) throw new Error("Email not found");
-        if (response.status === 401) throw new Error("Password is not valid");
-        if (response.status === 500) throw new Error("Server error");
         const data = await response.json();
+        if(!response.ok) throw new Error(data.message)
+        console.log(data.message)
         localStorage.setItem("userId", data.userId);
       } catch (error) {
         console.log(error.message);

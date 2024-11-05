@@ -6,6 +6,13 @@
 </head>
 <body>
   <p>Estas en tareas padre xd</p>
+  <ul>
+    <% tasks.forEach( task => { %>
+      <li>
+        <p><%= task.task_title %></p>
+      </li>
+    <% }) %>
+  </ul>
   <a href="/">HOME</a>
 </body>
 </html>
