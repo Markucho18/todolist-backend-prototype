@@ -53,6 +53,14 @@ router.post("/", async(req, res)=>{
     INSERT INTO tasks (user_id, task_title, task_deadline, task_priority, task_description)
     VALUES (?, ?, ?, ?, ?)
   `
+  try{
+    const result = await pool.query(query, [userId, task_title, task_deadline, task_priority, task_description])
+    if(result.affectedRows === 0) return res.status(500).json({message: "Couldn't create task"})
+    res.status(200).json({message: "Task created successfully"})
+  }catch(error){
+    console.log({error})
+    return res.status(500).json({message: "Couldn't create task"})
+  }
 })
 
 router.put("/:id", (req, res) => {

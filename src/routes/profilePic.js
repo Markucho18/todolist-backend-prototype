@@ -9,7 +9,7 @@ const cloudinary = require('cloudinary').v2;
 const MAX_SIZE = 2 * 1024 * 1024;
 
 const upload = multer({
-  dest: "../uploads", // Carpeta temporal para almacenar las imágenes subidas
+  dest: "./src/uploads", // Carpeta temporal para almacenar las imágenes subidas
   limits: {
     fileSize: MAX_SIZE // Limite de tamaño en bytes
   },
