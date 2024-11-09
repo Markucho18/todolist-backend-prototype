@@ -6,54 +6,77 @@
   </head>
   <body>
     <button id="createModalButton">CREATE TASK</button>
-    <ul id="tasksList" >
+    <ul id="tasksList">
+      <% tasks.forEach(task => { %>
       <li class="taskContainer">
-        <div>
-          <input type="checkbox" checked>
-          <h3>Titulo</h3>
+        <div class="task-header">
+          <input type="checkbox" <%= task.task_completed ? 'checked' : '' %> onchange="toggleCompleted(<%= task.task_id %>)" />
+          <h3><%= task.task_title %></h3>
+          <h3><%= task.task_id %></h3>
         </div>
-        <div>
-          <p>Deadline: </p>
-          <p>Priority: 3</p>
+        <div class="task-details">
+          <p>Deadline: <%= task.task_deadline ? task.task_deadline : 'No deadline' %></p>
+          <p>Priority: <%= task.task_priority %></p>
         </div>
-        <p>Descripcion</p>
+        <p class="task-description"><%= task.task_description %></p>
       </li>
+      <% }) %>
     </ul>
     <div class="modalContainer hidden">
       <form id="form" class="modal" enctype="multipart/form-data">
         <button type="button" id="closeModalButton">X</button>
         <label>
           title:
-          <input type="text" name="task_title" required maxlength="50"/>
+          <input type="text" name="task_title" required maxlength="50" />
         </label>
         <label>
           deadline:
-          <input type="date" name="task_deadline"/>
+          <input type="date" name="task_deadline" />
         </label>
         <label>
           priority:
-          <input type="number" name="task_priority" required min="1" max="4" value="4"/>
+          <input
+            type="number"
+            name="task_priority"
+            required
+            min="1"
+            max="4"
+            value="4"
+          />
         </label>
         <label>
           description:
-          <textarea name="task_description" style="resize: none;" maxlength="150">HOLA</textarea>
+          <textarea
+            name="task_description"
+            style="resize: none"
+            maxlength="150"
+          >
+          </textarea
+          >
         </label>
         <button type="submit">ENVIAR</button>
       </form>
     </div>
+    <a href="/tasks/no-date">INBOX</a>
+    <a href="/tasks/today">TODAY</a>
+    <a href="/tasks/tomorrow">TOMORROW</a>
+    <a href="/tasks/week">WEEK</a>
+    <a href="/tasks/month">MONTH</a>
     <a href="/">HOME</a>
-    
+
     <style>
       body {
+        min-height: 100vh;
         width: 100vw;
+        overflow: hidden;
       }
 
-      .taskContainer{
+      .taskContainer {
         display: flex;
         flex-direction: column;
         gap: 8px;
       }
-      .taskContainer div{
+      .taskContainer div {
         display: flex;
         flex-direction: row;
         gap: 8px;
@@ -82,11 +105,11 @@
         border-radius: 10px;
         width: 300px;
       }
-      .modal #closeModalButton{
+      .modal #closeModalButton {
         color: red;
         font-size: 24px;
       }
-      .modal label{
+      .modal label {
         display: flex;
         flex-direction: column;
         gap: 10px;
@@ -94,36 +117,78 @@
       .modal label input {
         width: 100%;
       }
+
+      #tasksList {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        list-style: none;
+        padding: 4px 8px;
+        margin: 0;
+        gap: 16px;
+      }
+
+      .taskContainer {
+        display: flex;
+        flex-direction: column;
+        background-color: #ffffff;
+        border-radius: 8px;
+        padding: 15px;
+        gap: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+      }
     </style>
 
     <script>
-      const createModalButton = document.getElementById("createModalButton")
-      const closeModalButton = document.getElementById("closeModalButton")
-      const modalContainer = document.querySelector(".modalContainer")
-      const form = document.getElementById("form")
+      const createModalButton = document.getElementById("createModalButton");
+      const closeModalButton = document.getElementById("closeModalButton");
+      const modalContainer = document.querySelector(".modalContainer");
+      const form = document.getElementById("form");
 
       const formData = {
         task_title: "",
         task_deadline: null,
         task_priority: "",
-        task_description: null
-      }
+        task_description: null,
+      };
 
       form.addEventListener("input", (e) => {
-        const {name, value} = e.target
-        formData[name] = value
-      })
+        const { name, value } = e.target;
+        formData[name] = value;
+      });
 
       const handleSubmit = async (e) => {
-        e.preventDefault()
-        try{
+        e.preventDefault();
+        try {
           const response = await fetch("http://localhost:3000/tasks", {
             method: "POST",
             credentials: "include",
             headers: {
-              "Content-type": "application/json"
+              "Content-type": "application/json",
             },
-            body: JSON.stringify(formData)
+            body: JSON.stringify(formData),
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message);
+          console.log(data.message);
+        } catch (error) {
+          console.log(error.message);
+        }
+      };
+
+      form.addEventListener("submit", handleSubmit);
+      createModalButton.addEventListener("click", () =>
+        modalContainer.classList.toggle("hidden")
+      );
+      closeModalButton.addEventListener("click", () =>
+        modalContainer.classList.toggle("hidden")
+      );
+
+      const toggleCompleted = async (taskId) => {
+        try{
+          const response = await fetch(`http://localhost:3000/tasks/complete/${taskId}`, {
+            method: "PUT",
+            credentials: "include"
           })
           const data = await response.json()
           if(!response.ok) throw new Error(data.message)
@@ -133,9 +198,7 @@
         }
       }
 
-      form.addEventListener("submit", handleSubmit)
-      createModalButton.addEventListener("click", () => modalContainer.classList.toggle("hidden"))
-      closeModalButton.addEventListener("click", () => modalContainer.classList.toggle("hidden"))
+
     </script>
   </body>
 </html>
