@@ -51,7 +51,12 @@ router.get("/edit/:key", (req, res) => {
   else return res.status(400).send("No se encontro el recurso solicitado")
 })
 
-router.get("/:id", async (req, res) => {
+router.get("/validate-token", authenticateToken, (req, res)=>{
+  console.log("Consulta en validate-token")
+  res.status(200).json({ message: "Token is valid", userId: req.user.id });
+})
+
+router.get("/fetch-data/:id", async (req, res) => {
   const {id} = req.params
   console.log({id})
   const query = "SELECT * FROM users WHERE id = ?"
@@ -83,16 +88,24 @@ router.post("/login", async (req, res)=>{
         return res.status(200).json({message: "Logged in succesfully", userId: user.id})
       }
       else{
-        return res.status(401).json({message: "Password is not valid"})
+        return res.status(401).json({message: "Password is not valid", notValid: "password"})
       }
     }
-    return res.status(404).json({ message: "Email not found"})
+    return res.status(404).json({ message: "Email not found", notValid: "email"})
   } catch(error){
     return res.status(500).json({ message: "Server error"})
   }
 })
 
-router.post("/register", async (req, res)=>{
+const validateEmail = async (req, res, next) => {
+  const {email} = req.body
+  const query = "SELECT * FROM users WHERE email = ?"
+  const [rows] = await pool.query(query, [email])
+  if(rows.length === 0) return next()
+  else res.status(401).json({message: "Email is already in use"})
+}
+
+router.post("/register", validateEmail, async (req, res)=>{
   const {username, email, user_password} = req.body
   const hashedPassword = await hashPassword(user_password)
   const defaultImageUrl = "https://res.cloudinary.com/dyihwozea/image/upload/byrmbj7rdtui1ohypvxm.webp"
@@ -141,15 +154,14 @@ router.put("/edit-username", authenticateToken, async (req, res)=>{
 })
 
 router.put("/edit-password", authenticateToken, async(req, res) => {
-  const {current_password, new_password} = req.body
+  const {old_password, new_password} = req.body
   const passwordGetQuery = "SELECT user_password FROM users WHERE id = ?"
-  if(current_password && new_password){
+  if(old_password && new_password){
     try{
       const [rows] = await pool.query(passwordGetQuery, [req.user.id])
       if(rows.length === 0) return res.status(404).json({message: "User id not found"})
-      console.log({user: rows[0]})
       const hashedPassword = rows[0].user_password
-      const passwordMatch = await comparePasswords(current_password, hashedPassword)
+      const passwordMatch = await comparePasswords(old_password, hashedPassword)
       if(!passwordMatch) return res.status(401).json({message: "Passwords don't match"})
       const newHashedPassword = await hashPassword(new_password)
       const passwordPutQuery = "UPDATE users SET user_password = ? WHERE id = ?"

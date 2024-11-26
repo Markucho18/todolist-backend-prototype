@@ -4,8 +4,6 @@ const authenticateToken = async (req, res, next) => {
   const accessToken = req.cookies?.accessToken
   const refreshToken = req.cookies?.refreshToken
   console.log("Autentificando token")
-  //console.log({accessToken, refreshToken})
-  //Confirmar si hay accessToken
   if(accessToken){
     const {accessToken} = req.cookies
     try{

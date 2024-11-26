@@ -34,26 +34,24 @@ router.use(authenticateToken)
 
 router.put("/", upload.single("profile_pic"), async (req, res) => {
   console.log("CONSULTA EN PUT DE users/edit-profile-pic")
-  if (!req.file) {
-    return res.status(400).json({ msg: "No file uploaded" });
-  }
+  if (!req.file) return res.status(400).json({ message: "No file uploaded" });
   try{
     const result = await cloudinary.uploader.upload(req.file.path) //La url local que devuelve el middleware upload.single()
     const imageUrl = result.secure_url
     await fs.promises.unlink(req.file.path) //Eliminar archivo temporal
     const query = 'UPDATE users SET profile_pic = ? WHERE id = ?'
     const results = await pool.query(query, [imageUrl, req.user.id])
-    if (results[0].affectedRows > 0) res.status(200).json({ msg: "Imagen actualizada correctamente", results, imageUrl });
-    else res.status(404).json({ msg: "No se pudo actualizar la imagen" });
+    if (results[0].affectedRows > 0) res.status(200).json({ message: "Picture updated successfully", results, imageUrl });
+    else res.status(404).json({ message: "Couldn't update picture" });
   }
   catch(error){
     if (error instanceof multer.MulterError) {
       // Un error de Multer (por ejemplo, tamaño de archivo excedido)
       console.log(error.message)
-      return res.status(400).json({ msg: error.message });
+      return res.status(400).json({ message: error.message });
     } else {
       console.log({msg: "There was an error in users/picture/POST", error})
-      return res.status(500).json({msg: "There was an error in users/picture/POST", error})
+      return res.status(500).json({message: "There was an error updating image", error})
     }
   }
 })

@@ -13,24 +13,40 @@ router.get("/", async (req, res)=>{
   const query = "SELECT * FROM tasks WHERE user_id = ?"
   try{
     const [rows] = await pool.query(query, [userId])
-    if(rows.length === 0) return res.status(204).send("No hay tareas xd")
-    res.status(200).render("tasks",{tasks: rows})
+    if(rows.length === 0) return res.status(204).json({message: "No tasks found"})
+    res.status(200).json({message: "Tasks found successfully", rows})
+    //res.status(200).render("tasks",{tasks: rows})
   } catch(error){
-    res.status(500).send(error)
+    res.status(500).json({message: "Server error", error})
   }
 })
 
 router.get("/no-date", async(req, res) => {
   const userId = req.user.id
-  res.send("Saca las panochass")
+  const query = "SELECT * FROM tasks WHERE task_deadline IS NULL AND user_id = ?"
+  try{
+    const [rows] = await pool.query(query, [userId])
+    if(rows.length === 0){
+      console.log("Sin tareas sin fecha")
+      return res.status(204).json({message: "No tasks found"})
+    }
+    res.render("tasksInbox", {tasks: rows})
+  } catch(error){
+    console.log({error})
+    res.json({message: "Error has ocurred"})
+  }
 })
 
 router.get("/today", async(req, res) => {
+  console.log("Consulta en tasks/today")
   const userId = req.user.id
   const query = "SELECT * FROM tasks WHERE task_deadline = CURDATE() AND user_id = ?"
   try{
     const [rows] = await pool.query(query, [userId])
-    if(rows.length === 0) return res.status(204).json({message: "No tasks found today"})
+    if(rows.length === 0){
+      console.log("Sin tareas de hoy")
+      return res.status(204).json({message: "No tasks found today"})
+    }
     res.render("tasksToday", {tasks: rows})
   } catch(error){
     console.log({error})
@@ -40,21 +56,31 @@ router.get("/today", async(req, res) => {
 
 router.get("/tomorrow", async(req, res) => {
   const userId = req.user.id
-  
+  const query = "SELECT * FROM tasks WHERE task_deadline = DATE_ADD(CURDATE(), INTERVAL 1 DAY) AND user_id = ?"
+  try{
+    const [rows] = await pool.query(query, [userId])
+    if(rows.length === 0) return res.status(204).json({message: "No tasks found tomorrow", results: rows})
+    res.status(200).json({message: "Tasks from tomorrow obtained successfully", results: rows})
+  } catch(error){
+    console.log(error)
+    res.status(500).json({message: "Server error"})
+  }
 })
 
 router.get("/week", async(req, res) => {
   const userId = req.user.id
+  res.send("Tareas de esta semana")
   
 })
 
 router.get("/month", async(req, res) => {
   const userId = req.user.id
+  res.send("Tareas de este mes")
 
 })
 
 
-router.post("/", async(req, res)=>{
+router.post("/create-task", async(req, res)=>{
   const userId = req.user.id
   const {task_title, task_deadline, task_priority, task_description} = req.body
   const query = `
@@ -64,7 +90,7 @@ router.post("/", async(req, res)=>{
   try{
     const result = await pool.query(query, [userId, task_title, task_deadline, task_priority, task_description])
     if(result.affectedRows === 0) return res.status(500).json({message: "Couldn't create task"})
-    res.status(200).json({message: "Task created successfully"})
+    res.status(200).json({message: "Task created successfully", result})
   }catch(error){
     console.log({error})
     return res.status(500).json({message: "Couldn't create task"})
@@ -95,9 +121,18 @@ router.put("/edit/:id", (req, res) => {
   `
 })
 
-router.delete("/:id", (req, res) => {
+router.delete("/:id", async (req, res) => {
   const taskId = req.params.id
+  console.log({taskId})
   const query = "DELETE FROM tasks WHERE task_id = ?"
+  try{
+    const results = await pool.query(query, [taskId])
+    if(results[0].affectedRows === 0) return res.status(404).json({message: "No task found"})
+    res.status(200).json({message: "Task deleted successfully"})
+  } catch(error){
+    console.log(error)
+    res.status(500).json({message: "An error has ocurred"})
+  }
 })
 
 module.exports = router

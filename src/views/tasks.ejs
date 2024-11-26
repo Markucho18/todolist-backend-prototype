@@ -13,6 +13,7 @@
           <input type="checkbox" <%= task.task_completed ? 'checked' : '' %> onchange="toggleCompleted(<%= task.task_id %>)" />
           <h3><%= task.task_title %></h3>
           <h3><%= task.task_id %></h3>
+          <button onclick="deleteTask(<%= task.task_id %>)">DELETE</button>
         </div>
         <div class="task-details">
           <p>Deadline: <%= task.task_deadline ? task.task_deadline : 'No deadline' %></p>
@@ -198,6 +199,21 @@
         }
       }
 
+      const deleteTask = async (taskId) => {
+        console.log({taskId})
+        try{
+          const response = await fetch(`http://localhost:3000/tasks/${taskId}`, {
+            method: "DELETE",
+            credentials: "include"
+          })
+          console.log({response})
+          const data = await response.json()
+          if(!response.ok) throw new Error(data.message)
+          console.log(data.message)
+        } catch(error){
+          console.log(error.message)
+        }
+      }
 
     </script>
   </body>
